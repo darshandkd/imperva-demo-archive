@@ -60,10 +60,10 @@ jobs:
         name: docker-scout-findings
         path: scout-report.sarif
 
-  - name: Build and push Docker images
-    uses: docker/build-push-action@v6.7.0
-    with:
-      push: true
-      # Generate SBOM attestation for the build (shorthand for --attest=type=sbom)
-      sbom: true --attest=type=sbom
+    - name: Build and push Docker images
+      uses: docker/build-push-action@v6.7.0
+      with:
+        push: true
+        # Generate SBOM attestation for the build (shorthand for --attest=type=sbom)
+        sbom: true --attest=type=sbom
 
