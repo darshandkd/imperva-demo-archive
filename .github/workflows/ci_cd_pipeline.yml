@@ -89,6 +89,7 @@ jobs:
       env:
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       run: |
+        python <<EOF
         import openai
         import json
 
@@ -113,11 +114,11 @@ jobs:
                 }
             ]
         )
-
         # Extract and save the response
         analysis = response['choices'][0]['message']['content']
         with open('security_analysis_report.md', 'w') as report_file:
             report_file.write(analysis)
+        EOF
 
     - name: Upload Analysis Report
       uses: actions/upload-artifact@v4
