@@ -59,4 +59,68 @@ jobs:
       with:
         name: docker-scout-findings
         path: scout-report.sarif
+  chatgpt_analysis:
+    name: Analyze Reports with ChatGPT
+    runs-on: ubuntu-latest
+    needs: [sast_scan, image_scan]
+    
+    steps:
+    - name: Download Bandit Findings
+      uses: actions/download-artifact@v4
+      with:
+        name: bandit-findings
+        path: ./bandit/
 
+    - name: Download Docker Scout Findings
+      uses: actions/download-artifact@v4
+      with:
+        name: docker-scout-findings
+        path: ./docker-scout/
+
+    - name: Set up Python
+      uses: actions/setup-python@v3
+      with:
+        python-version: 3.8
+
+    - name: Install OpenAI API Client
+      run: pip install openai
+
+    - name: Analyze Reports with ChatGPT
+      env:
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      run: |
+        import openai
+        import json
+
+        # Load the Bandit and Docker Scout reports
+        with open('./bandit/bandit-report.json', 'r') as bandit_file:
+            bandit_report = json.load(bandit_file)
+
+        with open('./docker-scout/scout-report.sarif', 'r') as scout_file:
+            scout_report = scout_file.read()
+
+        # Send the reports to ChatGPT for analysis
+        response = openai.ChatCompletion.create(
+            model="gpt-4",
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You are a security analyst. Analyze SAST and Docker Scout reports and generate a table in Markdown format with columns: Item number, CVE / Concern, Vulnerable version, Fixed version, Steps to fix."
+                },
+                {
+                    "role": "user",
+                    "content": f"Bandit Report: {json.dumps(bandit_report)}\nDocker Scout Report: {scout_report}"
+                }
+            ]
+        )
+
+        # Extract and save the response
+        analysis = response['choices'][0]['message']['content']
+        with open('security_analysis_report.md', 'w') as report_file:
+            report_file.write(analysis)
+
+    - name: Upload Analysis Report
+      uses: actions/upload-artifact@v4
+      with:
+        name: chatgpt-security-analysis
+        path: security_analysis_report.md
