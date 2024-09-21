@@ -100,8 +100,8 @@ jobs:
         with open('./docker-scout/scout-report.sarif', 'r') as scout_file:
             scout_report = scout_file.read()
 
-        # Send the reports to ChatGPT for analysis
-        response = openai.ChatCompletion.create(
+        # Send the reports to ChatGPT for analysis using the new OpenAI API format
+        response = openai.completions.create(
             model="gpt-4",
             messages=[
                 {
@@ -114,12 +114,13 @@ jobs:
                 }
             ]
         )
+
         # Extract and save the response
         analysis = response['choices'][0]['message']['content']
         with open('security_analysis_report.md', 'w') as report_file:
             report_file.write(analysis)
         EOF
-
+        
     - name: Upload Analysis Report
       uses: actions/upload-artifact@v4
       with:
