@@ -70,7 +70,5 @@ jobs:
       uses: docker/build-push-action@v6.7.0
       with:
         push: true
-        tags: tags: ${{ secrets.DOCKERHUB_USERNAME }}/imperva-demo-py-api:latest
+        tags: ${{ secrets.DOCKERHUB_USERNAME }}/imperva-demo-py-api:latest
         sbom: true
-
-
