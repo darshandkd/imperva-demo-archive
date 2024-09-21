@@ -60,12 +60,17 @@ jobs:
         name: docker-scout-findings
         path: scout-report.sarif
 
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v3.3.0
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
     - name: Build and push Docker images
       uses: docker/build-push-action@v6.7.0
       with:
         push: true
-        tags: latest
-        # Generate SBOM attestation for the build (shorthand for --attest=type=sbom)
-        sbom: true --attest=type=sbom
+        tags: tags: ${{ secrets.DOCKERHUB_USERNAME }}/imperva-demo-py-api:latest
+        sbom: true
 
 
