@@ -82,8 +82,8 @@ jobs:
     # Step 6: Run OWASP ZAP scan against the API
     - name: Run OWASP ZAP API Scan
       run: |
-        docker run -v $(pwd):/zap/wrk/:rw --network="host" ghcr.io/zaproxy/zaproxy:stable zap-api-scan.py \
-          -t http://localhost:5000/v2/api-docs \
+        docker run -v $(pwd):/zap/wrk/:rw --network="host" --user zap ghcr.io/zaproxy/zaproxy:stable zap-api-scan.py \
+          -t http://localhost:5000/ \
           -f openapi \
           -r /zap/wrk/zap_report.html \
           -d
