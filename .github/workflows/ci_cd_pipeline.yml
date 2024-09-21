@@ -4,7 +4,7 @@ on: [push]
 
 jobs:
   sast_scan:
-    name: Run SAST scan
+    name: Running Static Application Security test (SAST)
     runs-on: ubuntu-latest
 
     steps:
@@ -31,7 +31,7 @@ jobs:
         path: bandit-report.json
 
   image_scan:
-    name: Build Image and Run Image Scan
+    name: Building Image and Running Image Scan
     runs-on: ubuntu-latest
 
     steps:
@@ -72,3 +72,25 @@ jobs:
         push: true
         tags: darshandkd/imperva-demo-py-api:latest
         sbom: true
+
+    # Step 5: Start the API container
+    - name: Run the API container
+      run: |
+        docker run -d -p 8080:80 --name imperva-demo-py-api darshandkd/imperva-demo-py-api:latest
+        sleep 15  # Give the container time to initialize
+
+    # Step 6: Run OWASP ZAP scan against the API
+    - name: Run OWASP ZAP API Scan
+      run: |
+        docker run -v $(pwd):/zap/wrk/:rw --network="host" owasp/zap2docker-stable zap-api-scan.py \
+          -t http://localhost:8080/ \
+          -f openapi \
+          -r zap_report.html \
+          -d
+
+    # Step 7: Upload ZAP Report as artifact
+    - name: Upload ZAP Scan Report
+      uses: actions/upload-artifact@v3
+      with:
+        name: ZAP Report
+        path: ./zap_report.html
