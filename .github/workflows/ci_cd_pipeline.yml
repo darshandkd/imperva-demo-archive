@@ -20,10 +20,10 @@ jobs:
       run: pip install bandit
 
     - name: Run Bandit Scan
-      run: bandit -ll -ii -r . -f json -o bandit-report.json
+      run: bandit -r . -f json -o bandit-report.json
 
     - name: Upload Artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: bandit-findings
@@ -53,7 +53,7 @@ jobs:
         sarif-file: scout-report.sarif
 
     - name: Upload Artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: docker-scout-findings
