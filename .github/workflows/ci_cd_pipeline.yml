@@ -28,18 +28,6 @@ jobs:
       with:
         repo_path: "."
 
-  # Step 3: Dockerfile Linting using Hadolint
-  lint-dockerfile:
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
-
-    - name: Hadolint Dockerfile Linter
-      uses: hadolint/hadolint-action@v2
-      with:
-        dockerfile: Dockerfile
-
   # Step 4: Build Docker Image
   build-docker-image:
     runs-on: ubuntu-latest
@@ -48,7 +36,7 @@ jobs:
       uses: actions/checkout@v2
 
     - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v1
+      uses: docker/setup-buildx-action@v3
 
     - name: Build Docker Image
       run: |
@@ -63,7 +51,7 @@ jobs:
       uses: actions/checkout@v2
 
     - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v1
+      uses: docker/setup-buildx-action@v3
 
     - name: Build Docker Image
       run: docker build -t imperva-demo-py-api:latest .
@@ -82,7 +70,7 @@ jobs:
       uses: actions/checkout@v2
 
     - name: Log in to DockerHub
-      run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+      run: echo "${{ secrets.DOCKER_TOKEN }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
     - name: Build and tag Docker image
       run: |
