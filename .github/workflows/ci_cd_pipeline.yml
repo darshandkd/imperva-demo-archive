@@ -1,84 +1,59 @@
-name: CI/CD Pipeline with Security
-
-on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+name: CI
+on: [push]
 
 jobs:
-  # Step 1: Checkout the code
-  checkout:
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+ sast_scan: 
+   name: Run bandit scan
+   runs-on: ubuntu-latest
 
-  # Step 2: Secret Scanning using TruffleHog
-#  secret-scan:
-#    runs-on: ubuntu-latest
-#    steps:
-#    - name: Checkout code
-#      uses: actions/checkout@v2
-#
-#    - name: Secret Scan using TruffleHog
-#      uses: trufflesecurity/trufflehog@v3
-#      with:
-#        repo_path: "."
+   steps:
+   - name: Checkout code
+     uses: actions/checkout@v2
 
-  # Step 4: Build Docker Image
-  build-docker-image:
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+   - name: Set up python
+     uses: actions/setup-python@v2
+     with: 
+       python-version: 3.8
 
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
+   - name: Install Bandit
+     run: pip install bandit
 
-    - name: Build Docker Image
-      run: |
-        docker build -t imperva-demo-py-api:latest .
+   - name: Run bandit scan
+     run: bandit -ll -ii -r . -f json -o bandit-report.json
 
-  # Step 5: Docker Image Vulnerability Scan using Trivy
-  scan-docker-image:
-    runs-on: ubuntu-latest
-    needs: build-docker-image
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+   - name: upload artifact
+     uses: actions/upload-artifact@v3
+     if: always()
+     with:
+       name: bandit-finding
+       path: bandit-report.json
+    
+ image_scan: 
+   name: Build & scan image
+   runs-on: ubuntu-latest
 
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
+   steps:
+   - name: Checkout code
+     uses: actions/checkout@v2
+    
+   - name: Setup docker
+     uses: docker-practice/actions-setup-docker@v1
 
-    - name: Build Docker Image
-      run: docker build -t imperva-demo-py-api:latest .
+   - name: Build docker image
+     run: docker build -f Dockerfile -t imperva-demo-py-api:latest .
+  
+  - name: Docker Scout
+    uses: docker/scout-action@v1.13.0
+    with:
+      dockerhub-user: ${{ secrets.DOCKERHUB_USERNAME }}
+      dockerhub-password: ${{ secrets.DOCKERHUB_PASSWORD }}
+      command: quickview, cves
+      only-severities: critical, high
+      sarif-file: scout-report.sarif
 
-    - name: Trivy Docker Image Scan
-      uses: aquasecurity/trivy-action@master
-      with:
-        image-ref: "imperva-demo-py-api:latest"
-
-  # Step 6: Push Docker Image to DockerHub
-  push-docker-image:
-    runs-on: ubuntu-latest
-    needs: scan-docker-image
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
-
-    - name: Log in to DockerHub
-      run: |
-        echo "${{ secrets.DOCKERHUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
-
-    - name: Build and tag Docker image
-      run: |
-        docker build -t imperva-demo-py-api:latest .
-        docker tag imperva-demo-py-api:latest ${{ secrets.DOCKERHUB_USERNAME }}/imperva-demo-py-api:latest
-
-    - name: Push Docker image to DockerHub
-      run: |
-        docker push ${{ secrets.DOCKERHUB_USERNAME }}/imperva-demo-py-api:latest
-
+   - name: upload docker scout fings
+     uses: actions/upload-artifact@v3
+     if: always()
+     with:
+       name: docker-scout-finding
+       path: scout-report.sarif
