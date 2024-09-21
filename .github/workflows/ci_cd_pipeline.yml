@@ -106,7 +106,7 @@ jobs:
 
         # Send the reports to ChatGPT for analysis
         response = client.chat.completions.create(
-            model="gpt-4",
+            model="gpt-3.5-turbo",  # Updated model
             messages=[
                 {
                     "role": "system",
@@ -124,7 +124,8 @@ jobs:
         with open('security_analysis_report.md', 'w') as report_file:
             report_file.write(analysis)
         EOF
-        
+
+
     - name: Upload Analysis Report
       uses: actions/upload-artifact@v4
       with:
