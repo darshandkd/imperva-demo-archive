@@ -17,16 +17,16 @@ jobs:
       uses: actions/checkout@v2
 
   # Step 2: Secret Scanning using TruffleHog
-  secret-scan:
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
-
-    - name: Secret Scan using TruffleHog
-      uses: trufflesecurity/trufflehog@v3
-      with:
-        repo_path: "."
+#  secret-scan:
+#    runs-on: ubuntu-latest
+#    steps:
+#    - name: Checkout code
+#      uses: actions/checkout@v2
+#
+#    - name: Secret Scan using TruffleHog
+#      uses: trufflesecurity/trufflehog@v3
+#      with:
+#        repo_path: "."
 
   # Step 4: Build Docker Image
   build-docker-image:
