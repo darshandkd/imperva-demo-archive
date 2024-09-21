@@ -76,7 +76,7 @@ jobs:
     - name: Build and tag Docker image
       run: |
         docker build -t imperva-demo-py-api:latest .
-    docker tag imperva-demo-py-api:latest ${{ secrets.DOCKERHUB_USERNAME }}/imperva-demo-py-api:latest
+        docker tag imperva-demo-py-api:latest ${{ secrets.DOCKERHUB_USERNAME }}/imperva-demo-py-api:latest
 
     - name: Push Docker image to DockerHub
       run: |
