@@ -64,6 +64,8 @@ jobs:
       uses: docker/build-push-action@v6.7.0
       with:
         push: true
+        tags: latest
         # Generate SBOM attestation for the build (shorthand for --attest=type=sbom)
         sbom: true --attest=type=sbom
+
 
