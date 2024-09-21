@@ -70,12 +70,16 @@ jobs:
       uses: actions/checkout@v2
 
     - name: Log in to DockerHub
-      run: echo "${{ secrets.DOCKER_TOKEN }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+      id: docker-hub
+      env:
+        username: ${{secrets.DOCKERHUB_USERNAME}}
+        password: ${{secrets.DOCKERHUB_PASSWORD}}
+      run: |
+        docker login -u $username -p $password 
 
     - name: Build and tag Docker image
       run: |
         docker build -t imperva-demo-py-api:latest .
-        docker tag imperva-demo-py-api:latest darshandkd/imperva-demo-py-api:latest
 
     - name: Push Docker image to DockerHub
-      run: docker push darshandkd/imperva-demo-py-api:latest
+      run: docker push ${{secrets.DOCKERHUB_USERNAME}}/imperva-demo-py-api:latest
