@@ -4,7 +4,7 @@ on: [push]
 
 jobs:
   sast_scan:
-    name: Running Static Application Security test (SAST)
+    name: Running Static Application Security Test (SAST)
     runs-on: ubuntu-latest
 
     steps:
@@ -73,6 +73,26 @@ jobs:
         tags: darshandkd/imperva-demo-py-api:latest
         sbom: true
 
+  zap_scan:
+    name: OWASP ZAP DAST Scan
+    runs-on: ubuntu-latest
+    needs: image_scan
+
+    steps:
+    - name: Pull OWASP ZAP Docker Image
+      run: docker pull zaproxy/zap-stable
+
+    - name: Run OWASP ZAP DAST Scan
+      run: |
+        docker run -v $(pwd):/zap/wrk/:rw -t zaproxy/zap-stable zap-full-scan.py \
+          -t http://localhost:8080 -r zap_report.html
+
+    - name: Upload ZAP Report
+      uses: actions/upload-artifact@v4
+      with:
+        name: zap-findings
+        path: zap_report.html
+
     - name: Set up Python
       uses: actions/setup-python@v3
       with:
@@ -93,24 +113,27 @@ jobs:
         # Initialize the OpenAI client
         client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
 
-        # Load the Bandit and Docker Scout reports
+        # Load the Bandit, Docker Scout, and ZAP reports
         with open('./bandit/bandit-report.json', 'r') as bandit_file:
             bandit_report = json.load(bandit_file)
 
         with open('./docker-scout/scout-report.sarif', 'r') as scout_file:
             scout_report = scout_file.read()
 
+        with open('./zap_report.html', 'r') as zap_file:
+            zap_report = zap_file.read()
+
         # Send the reports to ChatGPT for analysis
         response = client.chat.completions.create(
-            model="gpt-3.5-turbo",  # Updated model
+            model="gpt-3.5-turbo",
             messages=[
                 {
                     "role": "system",
-                    "content": "You are a security analyst. Analyze SAST and Docker Scout reports and generate a table in Markdown format with columns: Item number, CVE / Concern, Vulnerable version, Fixed version, Steps to fix."
+                    "content": "You are a security analyst. Analyze SAST, Docker Scout, and ZAP reports, and generate a table in Markdown format with columns: Item number, CVE / Concern, Vulnerable version, Fixed version, Steps to fix."
                 },
                 {
                     "role": "user",
-                    "content": f"Bandit Report: {json.dumps(bandit_report)}\nDocker Scout Report: {scout_report}"
+                    "content": f"Bandit Report: {json.dumps(bandit_report)}\nDocker Scout Report: {scout_report}\nZAP Report: {zap_report}"
                 }
             ]
         )
@@ -121,9 +144,9 @@ jobs:
             report_file.write(analysis)
         EOF
 
-
     - name: Upload Analysis Report
       uses: actions/upload-artifact@v4
       with:
         name: chatgpt-security-analysis
         path: security_analysis_report.md
+
