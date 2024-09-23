@@ -73,23 +73,49 @@ jobs:
         tags: darshandkd/imperva-demo-py-api:latest
         sbom: true
 
-    # Step 5: Start the API container
-    - name: Run the API container
+    - name: Analyze Reports with ChatGPT
+      env:
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       run: |
-        docker run -d -p 5000:80 --name imperva-demo-py-api darshandkd/imperva-demo-py-api:latest
-        sleep 15  # Give the container time to initialize
+        python <<EOF
+        import os
+        import json
+        from openai import OpenAI
 
-    # Step 6: Run OWASP ZAP scan against the API
-    - name: Run OWASP ZAP API Scan
-      run: |
-        docker run -v $(pwd):/zap/wrk/:rw --network="host" --user="zap" ghcr.io/zaproxy/zaproxy:stable zap-api-scan.py \
-          -t http://localhost:5000/ \
-          -f openapi \
-#          -r /zap/wrk/zap_report.html \
-#          -d
-    # Step 7: Upload ZAP Report as artifact
-    - name: Upload ZAP Scan Report
-      uses: actions/upload-artifact@v3
+        # Initialize the OpenAI client
+        client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+
+        # Load the Bandit and Docker Scout reports
+        with open('./bandit/bandit-report.json', 'r') as bandit_file:
+            bandit_report = json.load(bandit_file)
+
+        with open('./docker-scout/scout-report.sarif', 'r') as scout_file:
+            scout_report = scout_file.read()
+
+        # Send the reports to ChatGPT for analysis
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",  # Updated model
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You are a security analyst. Analyze SAST and Docker Scout reports and generate a table in Markdown format with columns: Item number, CVE / Concern, Vulnerable version, Fixed version, Steps to fix."
+                },
+                {
+                    "role": "user",
+                    "content": f"Bandit Report: {json.dumps(bandit_report)}\nDocker Scout Report: {scout_report}"
+                }
+            ]
+        )
+
+        # Extract and save the response
+        analysis = response['choices'][0]['message']['content']
+        with open('security_analysis_report.md', 'w') as report_file:
+            report_file.write(analysis)
+        EOF
+
+
+    - name: Upload Analysis Report
+      uses: actions/upload-artifact@v4
       with:
-        name: ZAP Report
-        path: ./zap_report.html
+        name: chatgpt-security-analysis
+        path: security_analysis_report.md
