@@ -73,6 +73,14 @@ jobs:
         tags: darshandkd/imperva-demo-py-api:latest
         sbom: true
 
+    - name: Set up Python
+      uses: actions/setup-python@v3
+      with:
+        python-version: 3.8
+
+    - name: Install OpenAI API Client
+      run: pip install openai
+
     - name: Analyze Reports with ChatGPT
       env:
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
