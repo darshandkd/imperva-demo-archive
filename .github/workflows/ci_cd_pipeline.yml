@@ -84,11 +84,12 @@ jobs:
 
     - name: Run API Container for ZAP Scan
       run: |
-        docker run -d -p 8080:80 darshandkd/imperva-demo-py-api:latest
+        docker run -d -p 8080:80 nginx
 
     - name: Run OWASP ZAP DAST Scan
       run: |
-        docker run -v $(pwd):/zap/wrk/:rw -t zaproxy/zap-stable zap-full-scan.py -t http://localhost:8080 -r zap_report.html
+        docker run -t zaproxy/zap-stable zap-full-scan.py -t http://localhost:8080 -r zap_report.html
+#        docker exec -it zaproxy/zap-stable 
 
     - name: Upload ZAP Report
       uses: actions/upload-artifact@v4
