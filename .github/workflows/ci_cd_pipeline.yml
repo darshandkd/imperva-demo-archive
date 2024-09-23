@@ -80,7 +80,7 @@ jobs:
         sleep 15  # Give the container time to initialize
     # Step 6: Run OWASP ZAP scan against the API
     - name: Run OWASP ZAP API Scan
-      if: always()
+      continue-on-error: true.
       run: |
         docker run -v $(pwd):/zap/wrk/:rw --network="host" --user="zap" ghcr.io/zaproxy/zaproxy:stable zap-api-scan.py \
           -t http://localhost:5000/api \
