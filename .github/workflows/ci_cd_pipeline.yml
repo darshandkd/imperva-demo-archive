@@ -82,11 +82,10 @@ jobs:
     - name: Run OWASP ZAP API Scan
       continue-on-error: true
       run: |
-        docker run -v $(pwd):/zap/wrk/:rw --network="host" --user="zap" ghcr.io/zaproxy/zaproxy:stable zap-api-scan.py \
+        docker run -v $(pwd):/zap/wrk/:rw --user="zap" ghcr.io/zaproxy/zaproxy:stable zap-api-scan.py \
           -t http://localhost:5000/api \
           -f openapi \
-#          -r /zap/wrk/zap_report.html \
-#          -d
+          -r /zap/wrk/zap_report.html
     # Step 7: Upload ZAP Report as artifact
     - name: Upload ZAP Scan Report
       uses: actions/upload-artifact@v3
